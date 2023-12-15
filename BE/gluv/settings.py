@@ -2,8 +2,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 from datetime import timedelta
-
-
+from celery import Celery
+from celery.schedules import crontab
+from urllib.parse import quote
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,16 +38,18 @@ INSTALLED_APPS = [
     # custom app
     'chatrooms',
     'comments',
-    'likes',
+    # 'likes',
     'chatroom_messages',
-    'notifications',
+    # 'notifications',
     'posts',
-    'recruits',
+    # 'recruits',
     'reports',
     'schedules',
     'teams',
     'users',
     'books',
+    # Celery Task
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -147,4 +150,20 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+}
+
+REDIS_KEY = os.getenv("REDIS_KEY")
+
+CELERY_BROKER_URL = f'redis://:{quote(REDIS_KEY)}@localhost:6379/0'
+CELERY_RESULT_BACKEND = f'redis://:{quote(REDIS_KEY)}@localhost:6379/0'
+
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+CELERY_BEAT_SCHEDULE = {
+    'fetch_recent_book': {
+        'task': 'books.tasks.fetch_recent_book',
+        'schedule': timedelta(minutes=1),
+    },
 }
