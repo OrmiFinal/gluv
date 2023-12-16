@@ -2,7 +2,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 from datetime import timedelta
-
+from urllib.parse import quote
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'teams',
     'users',
     'books',
+    # Channels
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -78,7 +80,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'gluv.wsgi.application'
-
+ASGI_APPLICATION = 'gluv.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -150,3 +152,16 @@ SIMPLE_JWT = {
 }
 
 AUTH_USER_MODEL = 'users.User'
+
+# 환경 변수에서 Redis 비밀번호 조회
+REDIS_KEY = os.getenv("REDIS_KEY")
+
+# Django Channels 설정
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [f'redis://:{quote(REDIS_KEY)}@localhost:6379/0'],
+        },
+    },
+}
