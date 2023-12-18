@@ -17,9 +17,23 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
+
+    REGION_CHOICES = [
+        ('서울', '서울'),
+        ('경기', '경기'),
+        ('충남', '충남'),
+        ('충북', '충북'),
+        ('강원', '강원'),
+        ('전남', '전남'),
+        ('전북', '전북'),
+        ('경북', '경북'),
+        ('경남', '경남'),
+        ('제주', '제주'),
+    ]
+
     email = models.EmailField(unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    region = models.CharField(max_length=20, blank=True)
+    region = models.CharField(max_length=20, choices=REGION_CHOICES, blank=True)
     nickname = models.CharField(max_length=20)
     profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)
     profile_content = models.TextField(blank=True)
@@ -31,7 +45,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
-    # REQUIRED_FIELDS = ['region', 'nickname']
+    REQUIRED_FIELDS = ['nickname']
 
     def __str__(self):
         return self.email
