@@ -187,3 +187,5 @@ SPECTACULAR_SETTINGS = {
         'persistAuthorization': True,
     },
 }
+
+LOGIN_URL = ''

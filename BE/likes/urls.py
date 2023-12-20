@@ -6,5 +6,5 @@ router = DefaultRouter()
 router.register(r'', LikeViewSet, basename='like')
 
 urlpatterns = [
-    path('/', include(router.urls)),
+    path('', include(router.urls)),
 ]

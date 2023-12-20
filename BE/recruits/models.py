@@ -23,7 +23,7 @@ class RecruitmentPost(models.Model):
         ('경남', '경남'),
         ('제주', '제주'),
     ]
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, blank=True)
     author = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     title = models.TextField()
     content = models.TextField()

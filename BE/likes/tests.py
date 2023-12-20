@@ -7,20 +7,21 @@ from posts.models import CommunityPost
 from teams.models import Team
 from recruits.models import RecruitmentPost
 
-class LikeModelTest(TestCase):
-    """
+
+class TestLikeModel(TestCase):
+    '''
     좋아요 모델 테스트
 
     Detail:
-        1. 커뮤니티 게시글에 대한 좋아요 성공 확인
-        2. 모집 게시글에 대한 좋아요 성공 확인
+        커뮤니티 게시글, 모집 게시글에 대한 좋아요 요청 테스트
+        1~2. 각각 요청시 성공했는지 확인
         3. 오류로 인해 커뮤니티 게시글, 모집 게시글 id가 동시에 들어갔을 때에 대한 오류 확인
         4. 이미 좋아요 된 게시글에 대한 post 요청 오류 확인
         5. 같은 게시글에 두 번 post 요청 시도 시 중복 에러 확인
         6. 좋아요 해제 확인
         7. 내가 해당 포스트에 좋아요했는지 여부 확인
         8. 해당 포스트의 좋아요 수 확인
-    """
+    '''
     def setUp(self) -> None:
         self.client = APIClient()
 

@@ -27,12 +27,11 @@ class RecentBookView(viewsets.ViewSet):
             count (int, optional): 조회할 도서 수 (Default: DEFAULT_BOOK_COUNT)
         '''
         count = self.request.query_params.get('count', None)
-
         if count is None:
             count = self.DEFAULT_BOOK_COUNT
 
         # 신간 정보 요청
-        recent_books = Book.objects.order_by('-published_date')[:count]
+        recent_books = Book.objects.order_by('-published_date')[:int(count)]
         response_serializer = ListResponseSerializer(data={
             'status': 'success',
             'message': 'Success message',
