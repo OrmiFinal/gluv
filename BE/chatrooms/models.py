@@ -11,4 +11,4 @@ class ChatRoom(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.id}-{self.team}"
+        return f"{self.team}의 채팅방"
