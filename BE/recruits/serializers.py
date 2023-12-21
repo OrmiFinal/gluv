@@ -1,3 +1,4 @@
+from pkg_resources import require
 from rest_framework import serializers
 from .models import RecruitmentPost
 from schedules.models import Schedule
@@ -8,40 +9,32 @@ class RecruitmentPostSerializer(serializers.ModelSerializer):
         model = RecruitmentPost
         fields = ['id', 'team', 'author', 'title', 'content', 'region', 'created_at', 'updated_at', 'view_count']
 
+class RecruitmentPostCreateSerializer(serializers.Serializer):
+    # 게시글 필수 파라미터
+    title = serializers.CharField(required=True)
+    content = serializers.CharField(required=True)
+    # 게시글 옵션 파라미터
+    region = serializers.CharField(required=False)
+    # 팀 모델 관련 필수 파라미터
+    category = serializers.CharField(required=True)
+    max_attendance = serializers.IntegerField(required=True)
+    # 팀 지정 옵션 파라미터
+    team_id = serializers.IntegerField(required=True)
+    # 일정 모델 관련 옵션 파라미터
+    frequency = serializers.CharField(required=False)
+    week = serializers.CharField(required=False)
+    day = serializers.CharField(required=False)
 
-class RecruitmentPostCreateSerializer(serializers.ModelSerializer):
-    frequency = serializers.SerializerMethodField()
-    week = serializers.SerializerMethodField()
-    day = serializers.SerializerMethodField()
+    # 읽기 전용 
+    team = serializers.SerializerMethodField()
 
-    category = serializers.SerializerMethodField()
-    max_attendance = serializers.SerializerMethodField()
-
-    class Meta:
-        model = RecruitmentPost
-        fields = ['team', 'title', 'content', 'region', 'frequency', 'week', 'day', 'category', 'max_attendance']
+    def get_team(self, obj):
+        if self.validated_data is None:
+            return None
+        team_id = self.validated_data.get('team_id')
+        
+        try: 
+            return Team.objects.get(id=team_id)
+        except Exception as e:
+            return None
     
-    def get_frequency(self, obj):
-        team_id = self.context.get('team_id')
-        schedule = Schedule.objects.filter(team_id=team_id).first()
-        return schedule.frequency if schedule else None
-
-    def get_day(self, obj):
-        team_id = self.context.get('team_id')
-        schedule = Schedule.objects.filter(team_id=team_id).first()
-        return schedule.day if schedule else None
-
-    def get_week(self, obj):
-        team_id = self.context.get('team_id')
-        schedule = Schedule.objects.filter(team_id=team_id).first()
-        return schedule.week if schedule else None
-
-    def get_category(self, obj):
-        team_id = self.context.get('team_id')
-        team = Team.objects.filter(team_id=team_id).first()
-        return team.category if team else None
-    
-    def get_max_attendance(self, obj):
-        team_id = self.context.get('team_id')
-        team = Team.objects.filter(team_id=team_id).first()
-        return team.max_attendance if team else None

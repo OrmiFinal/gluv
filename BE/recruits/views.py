@@ -1,6 +1,8 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
+from django.db import transaction
 
 from .models import RecruitmentPost
 from .serializers import RecruitmentPostSerializer, RecruitmentPostCreateSerializer
@@ -8,6 +10,12 @@ from teams.serializers import TeamSerializer, TeamMemberSerializer
 from teams.models import Team, TeamMember
 from schedules.models import Schedule
 
+
+@extend_schema_view(
+    create=extend_schema(
+        request=RecruitmentPostCreateSerializer(),
+    )
+)
 class RecruitmentPostViewSet(viewsets.ModelViewSet):
     '''
     모집 게시글 ViewSet
@@ -27,49 +35,54 @@ class RecruitmentPostViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
+        # 인자 파싱 후 검증
         serializer = RecruitmentPostCreateSerializer(data=request.data)
-
-        if serializer.is_valid():
-            # 원하는 필드를 validated_data에 추가
-            validated_data = serializer.validated_data
-            validated_data['frequency'] = request.data.get('frequency')
-            validated_data['day'] = request.data.get('day')
-            validated_data['week'] = request.data.get('week')
-            validated_data['category'] = request.data.get('category')
-            validated_data['max_attendance'] = request.data.get('max_attendance')
-
-            author = self.request.user
-            team = validated_data.get('team')
-
-            if not team:
-                team_category = validated_data.get('category')
-                team_max_attendance = validated_data.get('max_attendance')
-                team = Team.objects.create(category=team_category, max_attendance=team_max_attendance, current_attendance=1, name=f'{author.nickname}의 모임')
-
-            team_member = TeamMember.objects.create(user=author, team=team, is_approved=True, is_leader=True)
-            team_member.save()
-
-            schedule_data = {
-                'frequency': validated_data.get('frequency'),
-                'day': validated_data.get('day'),
-                'week': validated_data.get('week'),
-            }
-            schedule = Schedule.objects.create(team=team, **schedule_data)
-            schedule.save()
-
-            recruit_post = RecruitmentPost.objects.create(
-                team=team,
-                author=author,
-                title=validated_data.get('title'),
-                content=validated_data.get('content'),
-                region=validated_data.get('region')
-            )
-            recruit_post.save()
-
-            return Response(recruit_post.id, status=status.HTTP_201_CREATED)
-        else:
+        if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        validated_data = serializer.validated_data
+
+        author = self.request.user
+        team = validated_data.get('team')
+
+        # 팀 정보가 없을 경우 생성
+        # 팀과 모집글 게시글이 1:1로 설계했으므로 추후에 get_or_create 형태로 바뀌어야함.
+        if not team:
+            team_category = validated_data.get('category')
+            team_max_attendance = validated_data.get('max_attendance')
+            team = Team.objects.create(
+                category=team_category, 
+                max_attendance=team_max_attendance, 
+                current_attendance=1, 
+                name=f'{author.nickname}의 모임')
+            
+            team_member, member_created = TeamMember.objects.get_or_create(
+                user=author, 
+                team=team, 
+                is_approved=True, 
+                is_leader=True)
+            team_member.save()
+        
+        # 스케줄이 없을 경우 생성, 있다면 기존 스케줄 활용
+        # 기존 스케줄이 활용될 경우, 추가 인자로 받은 부분을 업데이트 할지 결정해야함.
+        schedule_data = {
+            'frequency': validated_data.get('frequency'),
+            'day': validated_data.get('day'),
+            'week': validated_data.get('week'),
+        }
+        schedule, _ = Schedule.objects.get_or_create(team=team, defaults=schedule_data)
+
+        # 게시글 생성
+        recruit_post = RecruitmentPost.objects.create(
+            team=team,
+            author=author,
+            title=validated_data.get('title'),
+            content=validated_data.get('content'),
+            region=validated_data.get('region')
+        )
+        recruit_post.save()
+        return Response(recruit_post.id, status=status.HTTP_201_CREATED)
 
     
     @action(detail=False, methods=['get'], url_path='hot', url_name='hot')

@@ -1,3 +1,4 @@
+from email.policy import default
 from django.db import models
 from teams.models import Team
 
@@ -17,13 +18,14 @@ class Schedule(models.Model):
         list로 날아온 data를 변형하여 DB에는 "월요일, 수요일"로 저장합니다.
     '''
     FREQUENCY_CHOICES = [
+        ('주기없음', '주기없음'),
         ('매일', '매일'),
         ('매주', '매주'),
         ('매월', '매월'),
     ]
 
     team = models.OneToOneField(Team, on_delete=models.CASCADE, related_name='schedule')
-    frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES)
+    frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES, null=True,default="주기없음")
     day = models.CharField(max_length=100, null=True, blank=True)
     week = models.CharField(max_length=100, null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True)
