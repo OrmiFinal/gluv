@@ -1,3 +1,4 @@
+from django.http import Http404
 from rest_framework import status, generics
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
@@ -5,8 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Team, TeamMember
-from .permissions import IsLeaderOrReadOnly
 from .serializers import TeamSerializer, TeamMemberSerializer, TeamDetailSerializer, TeamMemberChangeSerializer
+from .permissions import IsLeaderOrReadOnly
 
 
 class TeamPagination(PageNumberPagination):
@@ -72,7 +73,7 @@ class TeamJoinView(generics.UpdateAPIView):
     request body: user_id (승인 대상의 user_id)
     '''
     queryset = TeamMember.objects.all()
-    permission_classes = [IsAuthenticated, IsLeaderOrReadOnly]
+    # permission_classes = [IsAuthenticated, IsLeaderOrReadOnly]
 
     def get_object(self):
         team_id = self.kwargs.get('pk')
@@ -102,6 +103,11 @@ class TeamLeaveView(generics.DestroyAPIView):
     '''
     모임 탈퇴를 위한 View
     로그인 권한 필요
+    TeamMember 모델의 속성
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    is_leader = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=False)
     '''
     permission_classes = [IsAuthenticated]
 
@@ -109,12 +115,20 @@ class TeamLeaveView(generics.DestroyAPIView):
         team_id = self.kwargs.get('pk')
         return TeamMember.objects.filter(team=team_id)
     
+   
+
     def get_object(self):
-        team_id = self.kwargs.get('pk')
-        user_id = self.request.user.id
-        instance = TeamMember.objects.get(team_id=team_id, user_id=user_id)
-        return instance
-        
+        try:
+            team_id = self.kwargs.get('pk')
+            user_id = self.request.user.id
+            print(f"team_id: {team_id}, user_id: {user_id}") 
+            instance = TeamMember.objects.get(team_id=team_id, user_id=user_id)
+            print(f"instance: {instance}") 
+            return instance
+        except TeamMember.DoesNotExist:
+            raise Http404("TeamMember not found")
+
+    
     def destroy(self, request, *args, **kwargs):
         # 모임 인원 수 조절
         instance = self.get_object()

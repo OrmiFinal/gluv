@@ -190,7 +190,7 @@ class ChatRoomConsumer(JsonWebsocketConsumer):
                 'nickname' : nickname,
             }))
 
-    def get_chatroom(self) -> ChatRoom | None:
+    def get_chatroom(self):
         '''
         유저 ID와 채팅방 ID로 채팅방을 가져오는 함수
         퍼미션 확인 기능 수행
