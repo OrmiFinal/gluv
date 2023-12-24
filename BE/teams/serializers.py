@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from chatrooms.models import ChatRoom
 
 from schedules.models import Schedule
 from recruits.models import RecruitmentPost
@@ -57,12 +58,14 @@ class TeamDetailSerializer(serializers.ModelSerializer):
     applied_member = serializers.SerializerMethodField()
     is_leader = serializers.SerializerMethodField()
     recruit_id = serializers.SerializerMethodField()
+    chatroom_id = serializers.SerializerMethodField()
+    location = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
         fields = [
             'id', 'name', 'category', 'is_closed', 'location', 'max_attendance', 'current_attendance', 'introduce', 'image',
-            'applied_member', 'is_leader', 'frequency', 'day', 'week', 'start_time', 'end_time', 'recruit_id'
+            'applied_member', 'is_leader', 'frequency', 'day', 'week', 'start_time', 'end_time', 'recruit_id', 'chatroom_id',
         ]
 
     def get_related_data(self, obj):
@@ -128,3 +131,17 @@ class TeamDetailSerializer(serializers.ModelSerializer):
             return None
         
         return RecruitmentPost.objects.filter(team=obj).first().id
+    
+    def get_chatroom_id(self, obj):
+        exists = ChatRoom.objects.filter(team=obj).exists()
+        if not exists:
+            return None
+        
+        return ChatRoom.objects.filter(team=obj).first().id
+    
+    def get_location(self, obj):
+        exists = RecruitmentPost.objects.filter(team=obj).exists()
+        if not exists:
+            return None
+        
+        return RecruitmentPost.objects.filter(team=obj).first().region

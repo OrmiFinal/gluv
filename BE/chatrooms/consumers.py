@@ -94,6 +94,7 @@ class ChatRoomConsumer(JsonWebsocketConsumer):
             'name' : str(self.chat_room),
             'message': 'required',
         }))
+        
         return
 
     def disconnect(self, close_code):
