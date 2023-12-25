@@ -46,6 +46,7 @@ class NotificationView(viewsets.ViewSet):
             'data': data,
         }
     
+    
     @action(methods=["get"], detail=False, url_path='unread', url_name="unread")
     def unread(self, request, *args, **kwargs):
         '''
@@ -93,15 +94,11 @@ class NotificationView(viewsets.ViewSet):
         '''
         전체 알림 조회
         '''
-        paginator = NotificationPagination()
 
         user = request.user
-        notifications = Notification.objects.filter(user=user)
-        page = paginator.paginate_queryset(notifications, request)
+        paginator = NotificationPagination()
 
-        data = NotificationSerializer(page, many=True).data
-        response = self.generate_response(
-            status='success', 
-            message='성공적으로 전체 알림을 반환했습니다.', 
-            data=data)
-        return Response(status=status.HTTP_200_OK, data=response)
+        notifications = Notification.objects.filter(user=user).order_by('-created_at')
+        page = paginator.paginate_queryset(notifications, request)
+        serializer = NotificationSerializer(page, many=True)
+        return paginator.get_paginated_response(status='success', message='Successfully', data=serializer.data)
